@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <title>Hệ thống quản lý khách hàng (BST)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Hệ thống quản lý khách hàng</h1>
+        <p>Dùng cấu trúc <strong>Binary Search Tree (BST)</strong></p>
+    </header>
+
+    <!-- THÔNG BÁO FLASH -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="messages">
+          {% for category, message in messages %}
+            <div class="message {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <div class="flex-row">
+        <!-- FORM THÊM KHÁCH HÀNG -->
+        <section class="card">
+            <h2>Thêm khách hàng</h2>
+            <form action="{{ url_for('add_customer') }}" method="POST" class="form">
+                <div class="form-group">
+                    <label for="name">Họ và tên</label>
+                    <input type="text" id="name" name="name" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Số điện thoại</label>
+                    <input type="text" id="phone" name="phone" required />
+                </div>
+
+                <button type="submit" class="btn primary">Thêm mới</button>
+            </form>
+        </section>
+        <section class="card">
+            <h2>Thêm khách hàng từ Excel / CSV</h2>
+
+            <form action="/upload" method="POST" enctype="multipart/form-data" class="form">
+                <div class="form-group">
+                    <label>Chọn file (.xlsx hoặc .csv)</label>
+                    <input type="file" name="file" accept=".xlsx,.csv" required />
+                </div>
+                <button type="submit" class="btn primary">Tải lên & Thêm</button>
+            </form>
+        </section>
+
+        <!-- FORM TÌM KIẾM KHÁCH HÀNG -->
+        <section class="card">
+            <h2>Tìm kiếm khách hàng</h2>
+            <form action="{{ url_for('search_customer') }}" method="POST" class="form">
+                <div class="form-group">
+                    <label for="search_type">Tìm theo</label>
+                    <select id="search_type" name="search_type">
+                        <option value="id" {% if search_type == 'id' %}selected{% endif %}>ID</option>
+                        <option value="name" {% if search_type == 'name' %}selected{% endif %}>Tên khách hàng</option>
+                        <option value="phone" {% if search_type == 'phone' %}selected{% endif %}>Số điện thoại</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="query">Giá trị cần tìm</label>
+                    <input
+                        type="text"
+                        id="query"
+                        name="query"
+                        value="{{ search_query }}"
+                        required
+                    />
+                </div>
+
+                <button type="submit" class="btn">Tìm kiếm</button>
+            </form>
+
+            {% if search_results is not none %}
+                <h3>Kết quả tìm kiếm</h3>
+                {% if search_results %}
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Họ và tên</th>
+                                <th>Số điện thoại</th>
+                                <th>Vị trí trong cây BST</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in search_results %}
+                                <tr>
+                                    <td>{{ item.node.id }}</td>
+                                    <td>{{ item.node.name }}</td>
+                                    <td>{{ item.node.phone }}</td>
+                                    <td>{{ item.position }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>Không có kết quả phù hợp.</p>
+                {% endif %}
+            {% endif %}
+        </section>
+    </div>
+
+    <!-- DANH SÁCH KHÁCH HÀNG -->
+    <section class="card full-width">
+        <h2>Danh sách khách hàng (In-order)</h2>
+        {% if customers %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Họ và tên</th>
+                        <th>Số điện thoại</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in customers %}
+                        <tr>
+                            <td>{{ c.id }}</td>
+                            <td>{{ c.name }}</td>
+                            <td>{{ c.phone }}</td>
+                            <td>
+                                <form
+                                    action="{{ url_for('delete_customer', customer_id=c.id) }}"
+                                    method="POST"
+                                    onsubmit="return confirm('Bạn có chắc chắn muốn xóa khách hàng ID {{ c.id }}?');"
+                                >
+                                    <button type="submit" class="btn danger">Xóa</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Chưa có khách hàng nào trong hệ thống.</p>
+        {% endif %}
+    </section>
+
+    <footer>
+        <p>Demo quản lý khách hàng sử dụng Binary Search Tree (BST) &amp; Flask</p>
+    </footer>
+</div>
+</body>
+</html>

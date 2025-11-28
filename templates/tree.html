@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <title>Cây nhị phân khách hàng (BST)</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6fb;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 { color: #1f3b5c; }
+
+        .tree-wrapper {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+            padding-bottom: 40px;
+        }
+
+        /* Node mặc định */
+        .node {
+            padding: 10px;
+            border-radius: 10px;
+            background: #ffffff;
+            border: 2px solid #3a7bd5;
+            min-width: 130px;
+            text-align: center;
+            margin: auto;
+            transition: 0.3s;
+        }
+
+        /* Node được highlight khi duyệt qua */
+        .node.visited {
+            background: #d6f5d6 !important;
+            border-color: #27ae60 !important;
+        }
+
+        /* Node cuối cùng (FOUND) */
+        .node.found {
+            background: #2ecc71 !important;
+            color: white !important;
+            border-color: #1e8e50 !important;
+            font-weight: bold;
+        }
+
+        .line {
+            height: 30px;
+            border-left: 2px solid #3a7bd5;
+            margin: auto;
+        }
+
+        .children {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            gap: 50px;  /* tăng khoảng cách để hỗ trợ depth 4 */
+        }
+
+        .level {
+            margin-bottom: 40px;
+        }
+
+        /* Search result box */
+        .step-box {
+            margin-top: 35px;
+            background: #fff;
+            padding: 20px;
+            width: 60%;
+            border-radius: 10px;
+            border: 1px solid #d2d7e5;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .step {
+            padding: 8px;
+            margin: 6px 0;
+            background: #eef3ff;
+            border-left: 4px solid #3a7bd5;
+            text-align: left;
+        }
+
+        input, button {
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: 1px solid #aaa;
+        }
+
+        button {
+            background: #3a7bd5;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover { background: #2c5ea8; }
+
+    </style>
+</head>
+
+<body>
+
+<h1>Biểu diễn cây nhị phân (BST)</h1>
+
+<!-- Form tìm kiếm -->
+<form action="/tree_search" method="POST">
+    <input type="number" name="search_id" placeholder="Nhập ID cần tìm" required />
+    <button type="submit">Tìm trong cây</button>
+</form>
+
+
+<div class="tree-wrapper">
+    <div class="tree">
+        {% macro render(node) %}
+            {% if node %}
+                <div class="level">
+                    <div class="node" id="node-{{ node.id }}">
+                        <strong>ID:</strong> {{ node.id }}<br>
+                        {{ node.name }}
+                    </div>
+
+                    {% if node.left or node.right %}
+                        <div class="line"></div>
+                        <div class="children">
+                            <div>{{ render(node.left) }}</div>
+                            <div>{{ render(node.right) }}</div>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endmacro %}
+
+        {% if tree %}
+            {{ render(tree) }}
+        {% else %}
+            <p>⚠ Chưa có dữ liệu cây</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if steps %}
+<div class="step-box" id="steps-box">
+    <h3>Các bước duyệt BST</h3>
+
+    {% for s in steps %}
+        <div class="step">{{ s }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<script>
+    // Lấy danh sách bước từ Flask (chuyển vào JS)
+    const stepsRaw = {{ steps | tojson if steps else "[]" }};
+
+    // Parse ID từ các bước dạng "50 → Left" hoặc "FOUND → 40"
+    let visited = [];
+
+    stepsRaw.forEach(step => {
+        // Lấy các số trong step
+        let ids = step.match(/\d+/g);
+        if (ids) {
+            ids.forEach(id => {
+                id = parseInt(id);
+                if (!visited.includes(id)) visited.push(id);
+            });
+        }
+    });
+
+    // Highlight từng node
+    visited.forEach((id, index) => {
+        let node = document.getElementById(`node-${id}`);
+        if (!node) return;
+
+        // Node cuối cùng FIND
+        if (index === visited.length - 1 && stepsRaw.at(-1).includes("FOUND")) {
+            node.classList.add("found");
+        } else {
+            node.classList.add("visited");
+        }
+    });
+</script>
+
+</body>
+</html>
