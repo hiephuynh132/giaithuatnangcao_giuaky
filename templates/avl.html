@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <title>So sánh AVL vs BST</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6fb;
+            padding: 20px;
+            text-align: center;
+        }
+
+        h1 { color: #1f3b5c; }
+        h2 { color: #2c3e50; margin-top: 20px; }
+
+        .compare-wrapper {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            gap: 20px;
+        }
+
+        .tree-container {
+            width: 48%;
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #d2d7e5;
+            box-shadow: 0 0 8px rgba(0,0,0,0.05);
+        }
+
+        .tree-wrapper {
+            margin-top: 20px;
+            overflow-x: auto;
+            padding-bottom: 40px;
+        }
+
+        /* Node mặc định */
+        .node {
+            padding: 10px;
+            border-radius: 10px;
+            background: #ffffff;
+            border: 2px solid #3a7bd5;
+            min-width: 130px;
+            text-align: center;
+            margin: auto;
+            transition: 0.3s;
+        }
+
+        /* Node được duyệt */
+        .node.visited {
+            background: #d6f5ff !important;
+            border-color: #007acc !important;
+        }
+
+        /* Node cuối cùng */
+        .node.found {
+            background: #2ecc71 !important;
+            color: white !important;
+            border-color: #1e8e50 !important;
+            font-weight: bold;
+        }
+
+        .line {
+            height: 30px;
+            border-left: 2px solid #3a7bd5;
+            margin: auto;
+        }
+
+        .children {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            gap: 50px;
+        }
+
+        .level {
+            margin-bottom: 40px;
+        }
+
+        .search-box {
+            margin-top: 25px;
+        }
+
+        input, button {
+            padding: 8px 14px;
+            border-radius: 6px;
+            border: 1px solid #aaa;
+        }
+
+        button {
+            background: #3a7bd5;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover { background: #2c5ea8; }
+
+        .steps-wrapper {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .step-box {
+            width: 48%;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #d2d7e5;
+        }
+
+        .step-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .step {
+            padding: 8px;
+            margin: 6px 0;
+            background: #eef3ff;
+            border-left: 4px solid #3a7bd5;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>So sánh cấu trúc & quá trình tìm kiếm: BST vs AVL</h1>
+
+
+<!-- Form tìm kiếm -->
+<form class="search-box" action="/avl" method="GET">
+    <input type="number" name="search_id" placeholder="Nhập ID cần tìm" required />
+    <button type="submit">Tìm kiếm đồng thời</button>
+</form>
+
+
+<div class="compare-wrapper">
+
+    <!-- ======================= BST TREE ======================= -->
+    <div class="tree-container">
+        <h2>BST (Rebuild)</h2>
+
+        <div class="tree-wrapper">
+            <div class="tree">
+
+                {% macro render_bst(node) %}
+                    {% if node %}
+                        <div class="level">
+                            <div class="node" id="bst-{{ node.id }}">
+                                <strong>ID:</strong> {{ node.id }}<br>
+                                {{ node.name }}
+                            </div>
+
+                            {% if node.left or node.right %}
+                                <div class="line"></div>
+                                <div class="children">
+                                    <div>{{ render_bst(node.left) }}</div>
+                                    <div>{{ render_bst(node.right) }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endmacro %}
+
+                {% if avl_tree %}
+                    {{ render_bst(avl_tree) }}
+                {% else %}
+                    <p>⚠ Chưa có dữ liệu cây BST</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ======================= AVL TREE ======================= -->
+    <div class="tree-container">
+        <h2>AVL (Rotation)</h2>
+
+        <div class="tree-wrapper">
+            <div class="tree">
+
+                {% macro render_avl(node) %}
+                    {% if node %}
+                        <div class="level">
+                            <div class="node" id="avl-{{ node.id }}">
+                                <strong>ID:</strong> {{ node.id }}<br>
+                                {{ node.name }}
+                            </div>
+
+                            {% if node.left or node.right %}
+                                <div class="line"></div>
+                                <div class="children">
+                                    <div>{{ render_avl(node.left) }}</div>
+                                    <div>{{ render_avl(node.right) }}</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endmacro %}
+
+                {% if bst_tree %}
+                    {{ render_avl(bst_tree) }}
+                {% else %}
+                    <p>⚠ Chưa có dữ liệu cây AVL</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+<!-- ======================= STEP BOX ======================= -->
+{% if bst_steps or avl_steps %}
+<div class="steps-wrapper">
+
+    <div class="step-box">
+        <div class="step-title">BST – Các bước duyệt</div>
+        {% for s in bst_steps %}
+            <div class="step">{{ s }}</div>
+        {% endfor %}
+    </div>
+
+    <div class="step-box">
+        <div class="step-title">AVL – Các bước duyệt</div>
+        {% for s in avl_steps %}
+            <div class="step">{{ s }}</div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endif %}
+
+
+
+<script>
+    // ======================= HIGHLIGHT BST =======================
+    const bstSteps = {{ bst_steps | tojson if bst_steps else '[]' }};
+    let bstVisited = [];
+
+    bstSteps.forEach(step => {
+        let ids = step.match(/\d+/g);
+        if (ids) ids.forEach(id => bstVisited.push(parseInt(id)));
+    });
+
+    bstVisited.forEach((id, index) => {
+        let node = document.getElementById(`bst-${id}`);
+        if (!node) return;
+
+        if (index === bstVisited.length - 1 && bstSteps.at(-1).includes("FOUND"))
+            node.classList.add("found");
+        else
+            node.classList.add("visited");
+    });
+
+
+    // ======================= HIGHLIGHT AVL =======================
+    const avlSteps = {{ avl_steps | tojson if avl_steps else '[]' }};
+    let avlVisited = [];
+
+    avlSteps.forEach(step => {
+        let ids = step.match(/\d+/g);
+        if (ids) ids.forEach(id => avlVisited.push(parseInt(id)));
+    });
+
+    avlVisited.forEach((id, index) => {
+        let node = document.getElementById(`avl-${id}`);
+        if (!node) return;
+
+        if (index === avlVisited.length - 1 && avlSteps.at(-1).includes("FOUND"))
+            node.classList.add("found");
+        else
+            node.classList.add("visited");
+    });
+
+</script>
+
+</body>
+</html>
