@@ -2,159 +2,475 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>So sánh AVL vs BST</title>
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6fb;
-            padding: 20px;
-            text-align: center;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        h1 { color: #1f3b5c; }
-        h2 { color: #2c3e50; margin-top: 20px; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #FAFBFC 0%, #F4F5F7 100%);
+            padding: 30px 20px;
+            min-height: 100vh;
+        }
 
-        .compare-wrapper {
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 { 
+            color: #172B4D;
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #5E6C84;
+            font-size: 16px;
+        }
+
+        h2 { 
+            color: #172B4D;
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
             display: flex;
-            justify-content: space-between;
-            margin-top: 30px;
-            gap: 20px;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            background: #0052CC;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .badge.avl {
+            background: #00875A;
+        }
+
+        /* Search Box */
+        .search-box {
+            text-align: center;
+            margin-bottom: 40px;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .search-box h3 {
+            color: #172B4D;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        input {
+            padding: 10px 16px;
+            border-radius: 3px;
+            border: 2px solid #DFE1E6;
+            font-size: 14px;
+            width: 250px;
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #0052CC;
+            box-shadow: 0 0 0 3px rgba(0, 82, 204, 0.1);
+        }
+
+        button {
+            padding: 10px 24px;
+            border-radius: 3px;
+            border: none;
+            background: #0052CC;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        button:hover { 
+            background: #0747A6;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 82, 204, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Compare Wrapper */
+        .compare-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+            max-width: 100%;
         }
 
         .tree-container {
-            width: 48%;
-            background: #ffffff;
-            border-radius: 10px;
-            padding: 20px;
-            border: 1px solid #d2d7e5;
-            box-shadow: 0 0 8px rgba(0,0,0,0.05);
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            border: 1px solid #DFE1E6;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: relative;
+            min-width: 0;
+            overflow: hidden;
         }
 
+        /* Zoom Controls */
+        .zoom-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .zoom-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 3px;
+            border: 2px solid #DFE1E6;
+            background: white;
+            color: #172B4D;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            padding: 0;
+        }
+
+        .zoom-btn:hover {
+            border-color: #0052CC;
+            color: #0052CC;
+            background: #DEEBFF;
+        }
+
+        .zoom-level {
+            padding: 6px 12px;
+            background: #F4F5F7;
+            border-radius: 3px;
+            font-size: 12px;
+            color: #5E6C84;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Tree Wrapper */
         .tree-wrapper {
-            margin-top: 20px;
-            overflow-x: auto;
-            padding-bottom: 40px;
+            margin-top: 30px;
+            overflow: auto;
+            padding: 20px;
+            min-height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
         }
 
-        /* Node mặc định */
-        .node {
-            padding: 10px;
-            border-radius: 10px;
-            background: #ffffff;
-            border: 2px solid #3a7bd5;
-            min-width: 130px;
-            text-align: center;
-            margin: auto;
-            transition: 0.3s;
+        .tree {
+            transform-origin: top center;
+            transition: transform 0.3s ease;
         }
 
-        /* Node được duyệt */
+        /* Node Styles */
+.node {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #DFE1E6;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 auto 10px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* chữ nhỏ nhất */
+.node strong {
+    margin-top: 30px;
+    color: #5E6C84;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1px;
+}
+
+/* số id chính – nhỏ lại */
+.node .id {
+    color: #0052CC;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 2px 0;
+}
+
+/* tên – nhỏ lại */
+.node .name {
+    color: #172B4D;
+    font-size: 9px;
+    margin-top: 1px;
+}
+
+
+        /* Node States */
         .node.visited {
-            background: #d6f5ff !important;
-            border-color: #007acc !important;
+            background: #DEEBFF !important;
+            border-color: #0052CC !important;
+            box-shadow: 0 2px 6px rgba(0, 82, 204, 0.2);
         }
 
-        /* Node cuối cùng */
         .node.found {
-            background: #2ecc71 !important;
+            background: #00875A !important;
             color: white !important;
-            border-color: #1e8e50 !important;
-            font-weight: bold;
+            border-color: #006644 !important;
+            box-shadow: 0 4px 12px rgba(0, 135, 90, 0.3);
+            animation: pulse 0.6s ease-in-out;
         }
 
+        .node.found strong,
+        .node.found .id,
+        .node.found .name {
+            color: white !important;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Lines/Edges */
         .line {
-            height: 30px;
-            border-left: 2px solid #3a7bd5;
-            margin: auto;
+            width: 2px;
+            height: 40px;
+            background: #C1C7D0;
+            margin: 0 auto;
+            position: relative;
         }
 
         .children {
             display: flex;
-            justify-content: space-between;
-            margin-top: 15px;
-            gap: 50px;
+            justify-content: center;
+            gap: 60px;
+            position: relative;
+            margin-top: 10px;
+        }
+
+        .children::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            right: 50%;
+            height: 2px;
+            background: #C1C7D0;
+        }
+
+        .children > div {
+            position: relative;
+            flex: 1;
+        }
+
+        .children > div::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 2px;
+            height: 40px;
+            background: #C1C7D0;
+            transform: translateX(-50%);
+        }
+
+        .children > div:first-child::after,
+        .children > div:last-child::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            height: 2px;
+            background: #C1C7D0;
+        }
+
+        .children > div:first-child::after {
+            left: 50%;
+            right: -30px;
+        }
+
+        .children > div:last-child::after {
+            right: 50%;
+            left: -30px;
         }
 
         .level {
-            margin-bottom: 40px;
+            margin-bottom: 20px;
         }
 
-        .search-box {
-            margin-top: 25px;
-        }
-
-        input, button {
-            padding: 8px 14px;
-            border-radius: 6px;
-            border: 1px solid #aaa;
-        }
-
-        button {
-            background: #3a7bd5;
-            color: white;
-            cursor: pointer;
-        }
-        button:hover { background: #2c5ea8; }
-
+        /* Steps Wrapper */
         .steps-wrapper {
-            margin-top: 30px;
             display: flex;
-            justify-content: space-between;
-            gap: 20px;
+            gap: 30px;
         }
 
         .step-box {
-            width: 48%;
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid #d2d7e5;
+            flex: 1;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            border: 1px solid #DFE1E6;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
         .step-title {
-            font-weight: bold;
+            font-weight: 600;
             font-size: 18px;
-            margin-bottom: 10px;
+            color: #172B4D;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #F4F5F7;
         }
 
         .step {
-            padding: 8px;
-            margin: 6px 0;
-            background: #eef3ff;
-            border-left: 4px solid #3a7bd5;
+            padding: 12px 16px;
+            margin: 10px 0;
+            background: #F4F5F7;
+            border-left: 4px solid #0052CC;
             text-align: left;
+            border-radius: 0 3px 3px 0;
+            color: #172B4D;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .step:hover {
+            background: #DEEBFF;
+            transform: translateX(4px);
+        }
+
+        .step-box.avl .step {
+            border-left-color: #00875A;
+        }
+
+        .step-box.avl .step:hover {
+            background: #E3FCEF;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #5E6C84;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .compare-wrapper {
+                flex-direction: column;
+            }
+
+            .steps-wrapper {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .search-form {
+                flex-direction: column;
+            }
+
+            input {
+                width: 100%;
+            }
         }
     </style>
 </head>
 
 <body>
 
-<h1>So sánh cấu trúc & quá trình tìm kiếm: BST vs AVL</h1>
+<div class="header">
+    <h1>🌳 So sánh cấu trúc & tìm kiếm: BST vs AVL</h1>
+    <p class="subtitle">Phân tích hiệu suất và cấu trúc cây tìm kiếm nhị phân</p>
+</div>
 
-
-<!-- Form tìm kiếm -->
-<form class="search-box" action="/avl" method="GET">
-    <input type="number" name="search_id" placeholder="Nhập ID cần tìm" required />
-    <button type="submit">Tìm kiếm đồng thời</button>
-</form>
-
+<!-- Search Box -->
+<div class="search-box">
+    <h3>🔍 Tìm kiếm đồng thời trên cả hai cây</h3>
+    <form class="search-form" action="/avl" method="GET">
+        <input type="number" name="search_id" placeholder="Nhập ID cần tìm (vd: 42)" required />
+        <button type="submit">Bắt đầu tìm kiếm</button>
+    </form>
+</div>
 
 <div class="compare-wrapper">
 
-    <!-- ======================= BST TREE ======================= -->
+    <!-- BST TREE -->
     <div class="tree-container">
-        <h2>BST (Rebuild)</h2>
+        <h2>
+            <span class="badge">BST</span>
+            Binary Search Tree (Rebuild)
+        </h2>
+        
+        <div class="zoom-controls">
+            <button class="zoom-btn" onclick="zoomOut('bst')">−</button>
+            <span class="zoom-level" id="bst-zoom">100%</span>
+            <button class="zoom-btn" onclick="zoomIn('bst')">+</button>
+        </div>
 
-        <div class="tree-wrapper">
-            <div class="tree">
-
+        <div class="tree-wrapper" id="bst-wrapper">
+            <div class="tree" id="bst-tree">
                 {% macro render_bst(node) %}
                     {% if node %}
                         <div class="level">
                             <div class="node" id="bst-{{ node.id }}">
-                                <strong>ID:</strong> {{ node.id }}<br>
-                                {{ node.name }}
+                                <strong>ID</strong>
+                                <div class="id">{{ node.id }}</div>
+                                <div class="name">{{ node.name }}</div>
                             </div>
 
                             {% if node.left or node.right %}
@@ -171,26 +487,41 @@
                 {% if avl_tree %}
                     {{ render_bst(avl_tree) }}
                 {% else %}
-                    <p>⚠ Chưa có dữ liệu cây BST</p>
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        <p>⚠ Chưa có dữ liệu cây BST</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
     </div>
 
-
-    <!-- ======================= AVL TREE ======================= -->
+    <!-- AVL TREE -->
     <div class="tree-container">
-        <h2>AVL (Rotation)</h2>
+        <h2>
+            <span class="badge avl">AVL</span>
+            AVL Tree (Self-Balancing)
+        </h2>
+        
+        <div class="zoom-controls">
+            <button class="zoom-btn" onclick="zoomOut('avl')">−</button>
+            <span class="zoom-level" id="avl-zoom">100%</span>
+            <button class="zoom-btn" onclick="zoomIn('avl')">+</button>
+        </div>
 
-        <div class="tree-wrapper">
-            <div class="tree">
-
+        <div class="tree-wrapper" id="avl-wrapper">
+            <div class="tree" id="avl-tree">
                 {% macro render_avl(node) %}
                     {% if node %}
                         <div class="level">
                             <div class="node" id="avl-{{ node.id }}">
-                                <strong>ID:</strong> {{ node.id }}<br>
-                                {{ node.name }}
+                                <strong>ID</strong>
+                                <div class="id">{{ node.id }}</div>
+                                <div class="name">{{ node.name }}</div>
                             </div>
 
                             {% if node.left or node.right %}
@@ -207,7 +538,14 @@
                 {% if bst_tree %}
                     {{ render_avl(bst_tree) }}
                 {% else %}
-                    <p>⚠ Chưa có dữ liệu cây AVL</p>
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="12" y1="8" x2="12" y2="12"/>
+                            <line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        <p>⚠ Chưa có dữ liệu cây AVL</p>
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -215,21 +553,19 @@
 
 </div>
 
-
-
-<!-- ======================= STEP BOX ======================= -->
+<!-- STEPS BOX -->
 {% if bst_steps or avl_steps %}
 <div class="steps-wrapper">
 
     <div class="step-box">
-        <div class="step-title">BST – Các bước duyệt</div>
+        <div class="step-title">📊 BST – Các bước duyệt</div>
         {% for s in bst_steps %}
             <div class="step">{{ s }}</div>
         {% endfor %}
     </div>
 
-    <div class="step-box">
-        <div class="step-title">AVL – Các bước duyệt</div>
+    <div class="step-box avl">
+        <div class="step-title">📊 AVL – Các bước duyệt</div>
         {% for s in avl_steps %}
             <div class="step">{{ s }}</div>
         {% endfor %}
@@ -238,10 +574,36 @@
 </div>
 {% endif %}
 
-
-
 <script>
-    // ======================= HIGHLIGHT BST =======================
+    // Zoom functionality
+    let bstZoom = 100;
+    let avlZoom = 100;
+
+    function zoomIn(tree) {
+        if (tree === 'bst') {
+            bstZoom = Math.min(bstZoom + 10, 200);
+            document.getElementById('bst-tree').style.transform = `scale(${bstZoom / 100})`;
+            document.getElementById('bst-zoom').textContent = bstZoom + '%';
+        } else {
+            avlZoom = Math.min(avlZoom + 10, 200);
+            document.getElementById('avl-tree').style.transform = `scale(${avlZoom / 100})`;
+            document.getElementById('avl-zoom').textContent = avlZoom + '%';
+        }
+    }
+
+    function zoomOut(tree) {
+        if (tree === 'bst') {
+            bstZoom = Math.max(bstZoom - 10, 50);
+            document.getElementById('bst-tree').style.transform = `scale(${bstZoom / 100})`;
+            document.getElementById('bst-zoom').textContent = bstZoom + '%';
+        } else {
+            avlZoom = Math.max(avlZoom - 10, 50);
+            document.getElementById('avl-tree').style.transform = `scale(${avlZoom / 100})`;
+            document.getElementById('avl-zoom').textContent = avlZoom + '%';
+        }
+    }
+
+    // Highlight BST
     const bstSteps = {{ bst_steps | tojson if bst_steps else '[]' }};
     let bstVisited = [];
 
@@ -260,8 +622,7 @@
             node.classList.add("visited");
     });
 
-
-    // ======================= HIGHLIGHT AVL =======================
+    // Highlight AVL
     const avlSteps = {{ avl_steps | tojson if avl_steps else '[]' }};
     let avlVisited = [];
 
@@ -279,7 +640,6 @@
         else
             node.classList.add("visited");
     });
-
 </script>
 
 </body>

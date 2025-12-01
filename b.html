@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>So sánh BST vs AVL – Tìm kiếm trực quan</title>
+<style>
+:root{
+    --bg:#f8f9fc; --card:#fff; --accent:#2563eb; --text:#1e293b;
+    --success:#16a34a; --muted:#e2e8f0;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;margin:0;padding:20px;background:var(--bg);font-family:system-ui,sans-serif;color:var(--text);}
+h1{text-align:center;margin:0 0 20px;font-size:28px;color:var(--accent);font-weight:600;}
+
+.top-controls{display:flex;justify-content:center;align-items:center;gap:15px;flex-wrap:wrap;margin-bottom:20px;}
+input[type=number]{padding:10px 14px;border:1px solid #cbd5e1;border-radius:8px;width:220px;font-size:15px;}
+button,.btn{padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:15px;}
+button:hover{background:#1d4ed8;}
+
+.compare-wrapper{display:flex;gap:30px;align-items:flex-start;}
+.tree-container{flex:1;background:var(--card);border-radius:12px;padding:20px;border:1px solid var(--muted);box-shadow:0 4px 20px rgba(0,0,0,.08);}
+.tree-viewport{position:relative;width:100%;height:680px;overflow:hidden;background:#fafbfc;border-radius:10px;cursor:grab;}
+.tree-viewport:active{cursor:grabbing;}
+.transform-wrapper{position:absolute;inset:0;transform-origin:0 0;will-change:transform;}
+.edges-svg{position:absolute;inset:0;pointer-events:none;overflow:visible;}
+
+.tree{padding:40px 20px;}
+.level{display:flex;flex-direction:column;align-items:center;gap:20px;margin-bottom:60px;}
+.children{display:flex;gap:140px;justify-content:center;align-items:flex-start;}
+
+.node{
+    width:170px;height:170px;background:var(--card);border:4px solid var(--accent);
+    border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.1);
+    transition:all .4s ease;font-size:16px;font-weight:500;
+}
+.node strong{font-size:28px;color:#1e40af;font-weight:700;margin-bottom:8px;}
+.node.visited{background:#dbeafe;border-color:#3b82f6;transform:scale(1.1) translateY(-12px);box-shadow:0 16px 40px rgba(59,130,246,.3);}
+.node.found{background:var(--success);color:#fff;border-color:#166534;transform:scale(1.18) translateY(-16px);box-shadow:0 20px 50px rgba(22,163,74,.4);}
+
+.steps-wrapper{width:380px;display:flex;flex-direction:column;gap:16px;}
+.step-box{background:var(--card);border-radius:12px;padding:18px;border:1px solid var(--muted);box-shadow:0 4px 20px rgba(0,0,0,.06);}
+.step-title{font-weight:700;font-size:16px;margin-bottom:12px;}
+.step{background:#e0f2fe;padding:10px 14px;border-left:5px solid var(--accent);border-radius:6px;margin-bottom:8px;font-size:14px;line-height:1.5;}
+
+@media(max-width:1200px){.compare-wrapper{flex-direction:column;}.steps-wrapper{width:100%;flex-direction:row;overflow-x:auto;}}
+</style>
+</head>
+<body>
+
+<h1>So sánh BST vs AVL – Tìm kiếm trực quan</h1>
+
+<div class="top-controls">
+    <form id="searchForm">
+        <input type="number" name="search_id" placeholder="Nhập ID cần tìm" required>
+        <button type="submit">Tìm kiếm & Chạy ngay</button>
+    </form>
+    <button id="resetView" class="btn">Reset View</button>
+</div>
+
+<div class="compare-wrapper">
+    <!-- BST -->
+    <div class="tree-container">
+        <h2 style="margin:0 0 12px;font-size:20px;">BST (Không cân bằng)</h2>
+        <div class="tree-viewport" id="bst-viewport">
+            <svg class="edges-svg" id="bst-edges"></svg>
+            <div class="transform-wrapper" id="bst-transform">
+                <div class="tree">
+                    {% macro render_bst(node) %}
+                        {% if node %}
+                        <div class="level">
+                            <div class="node" id="bst-{{ node.id }}">
+                                <strong>{{ node.id }}</strong>
+                                {{ node.name }}
+                            </div>
+                            {% if node.left or node.right %}
+                            <div class="children">
+                                <div>{{ render_bst(node.left) }}</div>
+                                <div>{{ render_bst(node.right) }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% endmacro %}
+                    {{ render_bst(bst_tree) if bst_tree else '<p style="text-align:center;color:#888;margin-top:150px;">Chưa có dữ liệu</p>' }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AVL -->
+    <div class="tree-container">
+        <h2 style="margin:0 0 12px;font-size:20px;">AVL (Tự cân bằng)</h2>
+        <div class="tree-viewport" id="avl-viewport">
+            <svg class="edges-svg" id="avl-edges"></svg>
+            <div class="transform-wrapper" id="avl-transform">
+                <div class="tree">
+                    {% macro render_avl(node) %}
+                        {% if node %}
+                        <div class="level">
+                            <div class="node" id="avl-{{ node.id }}">
+                                <strong>{{ node.id }}</strong>
+                                {{ node.name }}
+                            </div>
+                            {% if node.left or node.right %}
+                            <div class="children">
+                                <div>{{ render_avl(node.left) }}</div>
+                                <div>{{ render_avl(node.right) }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% endmacro %}
+                    {{ render_avl(avl_tree) if avl_tree else '<p style="text-align:center;color:#888;margin-top:150px;">Chưa có dữ liệu</p>' }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Steps -->
+    <div class="steps-wrapper">
+        <div class="step-box">
+            <span class="step-title">BST – Các bước duyệt</span>
+            {% for s in bst_steps %}<div class="step">{{ s }}</div>{% endfor %}
+        </div>
+        <div class="step-box">
+            <span class="step-title">AVL – Các bước duyệt</span>
+            {% for s in avl_steps %}<div class="step">{{ s }}</div>{% endfor %}
+        </div>
+    </div>
+</div>
+
+<script>
+// ==================== DATA ====================
+const bstSteps = {{ bst_steps | tojson }};
+const avlSteps = {{ avl_steps | tojson }};
+
+function getVisitedIds(steps){
+    const set = new Set();
+    steps.forEach(s => {
+        const matches = s.match(/\d+/g);
+        if(matches) matches.forEach(n => set.add(Number(n)));
+    });
+    return Array.from(set);
+}
+const bstVisited = getVisitedIds(bstSteps);
+const avlVisited = getVisitedIds(avlSteps);
+
+// ==================== VẼ ĐƯỜNG NỐI ====================
+function drawEdges(viewportId, svgId){
+    const vp = document.getElementById(viewportId);
+    const svg = document.getElementById(svgId);
+    if(!vp || !svg) return;
+    svg.innerHTML = '';
+    const rect = vp.getBoundingClientRect();
+
+    document.querySelectorAll(`#${viewportId} .level`).forEach(level => {
+        const parent = level.querySelector(':scope > .node');
+        if(!parent) return;
+        level.querySelectorAll(':scope > .children > div').forEach(div => {
+            const child = div.querySelector('.node');
+            if(!child) return;
+            const p = parent.getBoundingClientRect();
+            const c = child.getBoundingClientRect();
+            const x1 = p.left + p.width/2 - rect.left;
+            const y1 = p.bottom - rect.top;
+            const x2 = c.left + c.width/2 - rect.left;
+            const y2 = c.top - rect.top;
+            const mid = (y1 + y2)/2;
+            const path = document.createElementNS("http://www.w3.org/2000/svg","path");
+            path.setAttribute("d", `M${x1},${y1} L${x1},${mid} L${x2},${mid} L${x2},${y2}`);
+            path.setAttribute("stroke","#2563eb");
+            path.setAttribute("stroke-width","4");
+            path.setAttribute("fill","none");
+            path.style.opacity = "0.9";
+            svg.appendChild(path);
+        });
+    });
+}
+
+// ==================== VIEWPORT (PAN + ZOOM + FIT) ====================
+function createViewport(id, transformId, drawFn){
+    const vp = document.getElementById(id);
+    const wrap = document.getElementById(transformId);
+    let scale=1, tx=0, ty=0, dragging=false, sx,sy,stx,sty;
+
+    const apply = () => {
+        wrap.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`;
+        requestAnimationFrame(drawFn);
+    };
+
+    vp.onmousedown = e=>{ if(e.button===0){
+        dragging=true; sx=e.clientX; sy=e.clientY; stx=tx; sty=ty; vp.style.cursor='grabbing';
+    }};
+    window.onmousemove = e=>{
+        if(!dragging) return;
+        tx = stx + e.clientX - sx;
+        ty = sty + e.clientY - sy;
+        apply();
+    };
+    window.onmouseup = ()=>{ dragging=false; vp.style.cursor='grab'; };
+
+    vp.onwheel = e=>{
+        if(!e.ctrlKey) return;
+        e.preventDefault();
+        const delta = e.deltaY<0 ? 1.15 : 0.87;
+        const r = vp.getBoundingClientRect();
+        const mx = e.clientX - r.left;
+        const my = e.clientY - r.top;
+        const wx = (mx - tx)/scale;
+        const wy = (my - ty)/scale;
+        scale = Math.max(0.3, Math.min(3, scale*delta));
+        tx = mx - wx*scale;
+        ty = my - wy*scale;
+        apply();
+    };
+
+    function fit(){
+        const content = wrap.querySelector('.tree');
+        if(!content) return;
+        const c = content.getBoundingClientRect();
+        const v = vp.getBoundingClientRect();
+        const pad = 80;
+        const s = Math.min(
+            (v.width-pad*2)/c.width,
+            (v.height-pad*2)/c.height,
+            1
+        );
+        scale = Math.max(0.4, s);
+        tx = v.width/2 - (c.left - v.left + c.width/2)*scale;
+        ty = v.height/2 - (c.top - v.top + c.height/2)*scale;
+        wrap.style.transition = 'transform 0.7s ease-out';
+        apply();
+        setTimeout(()=>wrap.style.transition='',800);
+    }
+
+    return {fit, reset:()=>{scale=1;tx=0;ty=0;apply();}, get(){return{scale,tx,ty}}};
+}
+
+// ==================== ANIMATION ====================
+function createAnimator(prefix, ids){
+    const wrap = document.getElementById(prefix+'-transform');
+    let i=0, timer=null;
+
+    const clear = ()=> wrap.querySelectorAll('.node').forEach(n=>n.classList.remove('visited','found'));
+
+    const step = ()=>{
+        clear();
+        // highlight tất cả các node đã duyệt
+        for(let j=0;j<=i;j++){
+            const node = document.getElementById(prefix+'-'+ids[j]);
+            if(node) node.classList.add('visited');
+        }
+        // node hiện tại (hoặc cuối cùng lúc là found)
+        const node = document.getElementById(prefix+'-'+ids[i]);
+        if(node){
+            node.classList.add('found');
+            // pan nhẹ tới node đang duyệt
+            const vp = document.getElementById(prefix+'-viewport');
+            const r = vp.getBoundingClientRect();
+            const nr = node.getBoundingClientRect();
+            const targetX = r.width/2 - (nr.left - r.left + nr.width/2);
+            const targetY = r.height/2 - (nr.top - r.top + nr.height/2);
+            wrap.style.transition = 'transform 0.5s ease-out';
+            wrap.style.transform = `translate(${targetX}px,${targetY}px) scale(1.15)`;
+            setTimeout(()=>wrap.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`,600);
+        }
+
+        i++;
+        if(i >= ids.length){ clearInterval(timer); timer=null; }
+    };
+
+    return {
+        run: ()=>{
+            clear(); i=0;
+            timer = setInterval(step, 1100); // 1.1s mỗi bước – rất dễ nhìn
+        },
+        stop:()=>{ if(timer)clearInterval(timer); clear(); }
+    };
+}
+
+// ==================== KHỞI TẠO ====================
+let bstVP, avlVP, bstAnim, avlAnim;
+
+window.onload = ()=>{
+    bstVP = createViewport('bst-viewport','bst-transform', ()=>drawEdges('bst-viewport','bst-edges'));
+    avlVP = createViewport('avl-viewport','avl-transform', ()=>drawEdges('avl-viewport','avl-edges'));
+    bstAnim = createAnimator('bst', bstVisited);
+    avlAnim = createAnimator('avl', avlVisited);
+
+    // fit ngay khi load
+    setTimeout(()=>{
+        bstVP.fit();
+        avlVP.fit();
+        drawEdges('bst-viewport','bst-edges');
+        drawEdges('avl-viewport','avl-edges');
+    },300);
+
+    document.getElementById('searchForm').onsubmit = e=>{
+        e.preventDefault();
+        bstVP.fit();
+        avlVP.fit();
+        setTimeout(()=>{ bstAnim.run(); avlAnim.run(); }, 900);
+    };
+
+    document.getElementById('resetView').onclick = ()=>{
+        bstAnim.stop(); avlAnim.stop();
+        bstVP.fit(); avlVP.fit();
+    };
+};
+</script>
+</body>
+</html>
